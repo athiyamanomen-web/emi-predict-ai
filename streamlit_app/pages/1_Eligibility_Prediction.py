@@ -8,7 +8,7 @@ st.set_page_config(page_title="Eligibility Prediction", layout="wide")
 # =========================================================
 # PATH SETUP (DEPLOYMENT SAFE)
 # =========================================================
-BASE_DIR = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).resolve().parents[2]
 MODEL_PATH = BASE_DIR / "models" / "best_classification_model.pkl"
 
 @st.cache_resource

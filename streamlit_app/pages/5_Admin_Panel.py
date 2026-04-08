@@ -7,7 +7,7 @@ st.set_page_config(page_title="Admin Panel", layout="wide")
 # =========================================================
 # PATH SETUP (DEPLOYMENT SAFE)
 # =========================================================
-BASE_DIR = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_PATH = BASE_DIR / "data" / "processed" / "emi_featured_small.csv"
 MODEL_DIR = BASE_DIR / "models"
 

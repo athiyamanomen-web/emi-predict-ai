@@ -5,7 +5,7 @@ from pathlib import Path
 
 st.set_page_config(page_title="EMI Amount Prediction", layout="wide")
 
-BASE_DIR = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).resolve().parents[2]
 MODEL_PATH = BASE_DIR / "models" / "best_regression_model.pkl"
 
 @st.cache_resource
