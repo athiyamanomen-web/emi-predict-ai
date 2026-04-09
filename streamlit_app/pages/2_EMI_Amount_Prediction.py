@@ -232,9 +232,14 @@ if st.button("Predict Maximum EMI"):
         )
 
         prediction = reg_model.predict(input_df)[0]
-        st.success("Prediction completed successfully.")
-        st.info(f"💰 Maximum Affordable EMI: ₹ {prediction:,.0f} per month")
-        st.caption("Prediction is based on financial capacity, credit score, and expense patterns.")
+
+        try:
+            prediction = float(prediction)
+            st.success("Prediction completed successfully.")
+            st.info(f"💰 Maximum Affordable EMI: ₹ {prediction:,.0f} per month")
+        except Exception:
+            st.success("Prediction completed successfully.")
+            st.info(f"💰 Maximum Affordable EMI: ₹ {prediction} per month")
 
     except Exception as e:
         st.error(f"Prediction failed: {e}")
