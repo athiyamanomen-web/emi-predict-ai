@@ -243,8 +243,3 @@ if st.button("Predict Maximum EMI"):
 
     except Exception as e:
         st.error(f"Prediction failed: {e}")
-    
-prediction = reg_model.predict(input_df)[0]
-st.write("Raw prediction:", prediction)
-st.write("Prediction type:", type(prediction).__name__)
-st.write("Model class:", type(reg_model.named_steps["model"]).__name__)
