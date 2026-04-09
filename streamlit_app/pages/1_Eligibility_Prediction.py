@@ -46,6 +46,7 @@ def build_input_df(
     emi_scenario,
     requested_amount,
     requested_tenure,
+    
 ):
     total_expenses = (
         monthly_rent
@@ -132,6 +133,7 @@ def build_input_df(
         "emi_scenario": emi_scenario,
         "requested_amount": requested_amount,
         "requested_tenure": requested_tenure,
+        "emi_eligibility": "Unknown",
         "total_expenses": total_expenses,
         "disposable_income": disposable_income,
         "expense_to_income_ratio": expense_to_income_ratio,
