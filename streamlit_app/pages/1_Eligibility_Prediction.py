@@ -46,7 +46,6 @@ def build_input_df(
     emi_scenario,
     requested_amount,
     requested_tenure,
-    
 ):
     total_expenses = (
         monthly_rent
@@ -67,8 +66,6 @@ def build_input_df(
     dependents_ratio = safe_divide(dependents, family_size)
     income_per_year_exp = safe_divide(monthly_salary, years_of_employment + 1)
     disposable_income_ratio = safe_divide(disposable_income, monthly_salary)
-
-    requested_emi_estimate = safe_divide(requested_amount, requested_tenure)
 
     high_financial_stress = int(expense_to_income_ratio > 0.7)
     low_emergency_fund_flag = int(emergency_fund_months < 3)
@@ -155,10 +152,25 @@ def build_input_df(
         "emi_dependents_interaction": emi_dependents_interaction,
     }
 
-    return pd.DataFrame([input_data])
+    input_df = pd.DataFrame([input_data])
+
+    if hasattr(clf_model, "feature_names_in_"):
+        expected_cols = list(clf_model.feature_names_in_)
+        for col in expected_cols:
+            if col not in input_df.columns:
+                input_df[col] = 0
+        input_df = input_df[expected_cols]
+
+    metrics = {
+        "total_expenses": total_expenses,
+        "disposable_income": disposable_income,
+        "expense_to_income_ratio": expense_to_income_ratio,
+        "loan_to_income_ratio": loan_to_income_ratio,
+    }
+
+    return input_df, metrics
 
 st.title("EMI Eligibility Prediction")
-
 st.info("Prediction is based on income, expenses, credit score, and affordability ratios.")
 
 col1, col2, col3 = st.columns(3)
@@ -175,7 +187,13 @@ with col1:
 with col2:
     company_type = st.selectbox("Company Type", ["Small", "Mid-size", "Large Indian", "MNC", "Startup"])
     house_type = st.selectbox("House Type", ["Own", "Family", "Rented"])
-    monthly_rent = st.number_input("Monthly Rent", min_value=0.0, value=10000.0)
+
+    if house_type == "Own":
+        monthly_rent = 0.0
+        st.number_input("Monthly Rent", min_value=0.0, value=0.0, disabled=True)
+    else:
+        monthly_rent = st.number_input("Monthly Rent", min_value=0.0, value=10000.0)
+
     family_size = st.number_input("Family Size", min_value=1, value=3)
     dependents = st.number_input("Dependents", min_value=0, value=1)
     school_fees = st.number_input("School Fees", min_value=0.0, value=0.0)
@@ -185,7 +203,7 @@ with col3:
     travel_expenses = st.number_input("Travel Expenses", min_value=0.0, value=3000.0)
     groceries_utilities = st.number_input("Groceries & Utilities", min_value=0.0, value=10000.0)
     other_monthly_expenses = st.number_input("Other Monthly Expenses", min_value=0.0, value=5000.0)
-    existing_loans = st.selectbox("Existing Loans", ["Yes", "No"])
+    existing_loans = st.selectbox("Existing Loans", ["Yes", "No"], index=1)
     current_emi_amount = st.number_input("Current EMI Amount", min_value=0.0, value=0.0)
     credit_score = st.number_input("Credit Score", min_value=300.0, max_value=900.0, value=700.0)
     bank_balance = st.number_input("Bank Balance", min_value=0.0, value=100000.0)
@@ -200,22 +218,63 @@ requested_tenure = st.number_input("Requested Tenure (months)", min_value=1, val
 
 if st.button("Predict Eligibility"):
     try:
-        input_df = build_input_df(
-            age, gender, marital_status, education, monthly_salary, employment_type,
-            years_of_employment, company_type, house_type, monthly_rent, family_size,
-            dependents, school_fees, college_fees, travel_expenses, groceries_utilities,
-            other_monthly_expenses, existing_loans, current_emi_amount, credit_score,
-            bank_balance, emergency_fund, emi_scenario, requested_amount, requested_tenure
+        if years_of_employment > max(age - 18, 0):
+            st.warning("Years of employment looks unrealistic for the selected age.")
+            st.stop()
+
+        if dependents > family_size:
+            st.warning("Dependents cannot be greater than family size.")
+            st.stop()
+
+        input_df, metrics = build_input_df(
+            age,
+            gender,
+            marital_status,
+            education,
+            monthly_salary,
+            employment_type,
+            years_of_employment,
+            company_type,
+            house_type,
+            monthly_rent,
+            family_size,
+            dependents,
+            school_fees,
+            college_fees,
+            travel_expenses,
+            groceries_utilities,
+            other_monthly_expenses,
+            existing_loans,
+            current_emi_amount,
+            credit_score,
+            bank_balance,
+            emergency_fund,
+            emi_scenario,
+            requested_amount,
+            requested_tenure
         )
 
-        prediction = clf_model.predict(input_df)[0]
+        probs = clf_model.predict_proba(input_df)[0]
+        classes = list(clf_model.named_steps["model"].classes_)
+        prob_map = dict(zip(classes, probs))
 
-        if prediction == "Eligible":
-            st.success("✅ Eligible for EMI")
-        elif prediction == "High_Risk":
-            st.warning("⚠️ High Risk Applicant")
+        eligible_prob = prob_map.get("Eligible", 0.0)
+        high_risk_prob = prob_map.get("High_Risk", 0.0)
+        not_eligible_prob = prob_map.get("Not_Eligible", 0.0)
+
+        if eligible_prob >= 0.40:
+            st.success(f"✅ Eligible for EMI ({eligible_prob:.0%} confidence)")
+        elif high_risk_prob >= 0.35:
+            st.warning(f"⚠️ High Risk Applicant ({high_risk_prob:.0%} confidence)")
         else:
-            st.error("❌ Not Eligible for EMI")
+            st.error(f"❌ Not Eligible for EMI ({not_eligible_prob:.0%} confidence)")
+
+        st.caption(
+            f"Disposable income: ₹{metrics['disposable_income']:,.0f} | "
+            f"Total expenses: ₹{metrics['total_expenses']:,.0f} | "
+            f"Expense-to-income ratio: {metrics['expense_to_income_ratio']:.2f} | "
+            f"Loan-to-income ratio: {metrics['loan_to_income_ratio']:.2f}"
+        )
 
     except Exception as e:
         st.error(f"Prediction failed: {e}")
