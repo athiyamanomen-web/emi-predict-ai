@@ -31,6 +31,7 @@ def build_input_df(
     )
 
     disposable_income = monthly_salary - total_expenses
+    diff = disposable_income
     expense_to_income_ratio = safe_divide(total_expenses, monthly_salary)
     emi_to_income_ratio = safe_divide(current_emi_amount, monthly_salary)
     savings_to_income_ratio = safe_divide(bank_balance, monthly_salary)
@@ -69,6 +70,7 @@ def build_input_df(
         "requested_tenure": requested_tenure,
         "total_expenses": total_expenses,
         "disposable_income": disposable_income,
+        "diff": diff,
         "expense_to_income_ratio": expense_to_income_ratio,
         "emi_to_income_ratio": emi_to_income_ratio,
         "savings_to_income_ratio": savings_to_income_ratio,
