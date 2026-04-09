@@ -277,4 +277,4 @@ if st.button("Predict Eligibility"):
         )
 
     except Exception as e:
-        st.error(f"Prediction failed: {e}")g
+        st.error(f"Prediction failed: {e}")
