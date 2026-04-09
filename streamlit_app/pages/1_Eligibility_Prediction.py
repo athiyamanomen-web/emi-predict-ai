@@ -259,16 +259,16 @@ if st.button("Predict Eligibility"):
         prob_map = dict(zip(classes, probs))
 
         eligible_prob = prob_map.get("Eligible", 0.0)
-        high_risk_prob = prob_map.get("High_Risk", 0.0)
-        not_eligible_prob = prob_map.get("Not_Eligible", 0.0)
 
-        if eligible_prob >= 0.40:
+        if eligible_prob >= 0.50:
             st.success(f"✅ Eligible for EMI ({eligible_prob:.0%} confidence)")
-        elif high_risk_prob >= 0.35:
-            st.warning(f"⚠️ High Risk Applicant ({high_risk_prob:.0%} confidence)")
-        else:
-            st.error(f"❌ Not Eligible for EMI ({not_eligible_prob:.0%} confidence)")
 
+        elif 0.35 <= eligible_prob < 0.50:
+            st.warning(f"⚠️ Borderline Case ({eligible_prob:.0%} confidence)")
+            st.info("👉 Consider reducing loan amount or increasing tenure for better eligibility.")
+
+        else:
+            st.error(f"❌ Not Eligible for EMI ({eligible_prob:.0%} confidence)")
         st.caption(
             f"Disposable income: ₹{metrics['disposable_income']:,.0f} | "
             f"Total expenses: ₹{metrics['total_expenses']:,.0f} | "
@@ -277,4 +277,4 @@ if st.button("Predict Eligibility"):
         )
 
     except Exception as e:
-        st.error(f"Prediction failed: {e}")
+        st.error(f"Prediction failed: {e}")g
